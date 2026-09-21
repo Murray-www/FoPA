@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberCheck — конструктор чек-листов по кибергигиене</title>
+<style>
+  :root{--bg:#f4f6f8;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#2563eb;--brand2:#7c3aed;--danger:#dc2626;--warn:#d97706;--border:#e5e7eb;--ok:#16a34a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px}
+  header{background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;padding:22px 20px;border-radius:14px;margin-bottom:16px}
+  header h1{margin:0;font-size:26px}
+  header p{margin:6px 0 14px;opacity:.92}
+  .tabs{display:flex;gap:10px;flex-wrap:wrap}
+  .tabs button{border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);color:#fff;padding:9px 16px;border-radius:999px;cursor:pointer;font-size:14px}
+  .tabs button.active{background:#fff;color:#1e40af;font-weight:600;border-color:#fff}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+  h2{margin:0 0 6px;font-size:20px}
+  h3{margin:14px 0 8px;font-size:16px}
+  .muted{color:var(--muted);font-size:14px}
+  .btn{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.purple{background:var(--brand2);color:#fff}
+  .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
+  .btn.small{padding:5px 10px;font-size:12px}
+  .btn.danger{background:#fee2e2;color:#991b1b}
+  .btn.ok{background:#dcfce7;color:#166534}
+  input[type=text],textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit}
+  textarea{min-height:64px;resize:vertical}
+  .row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .editor{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start}
+  @media(max-width:760px){.editor{grid-template-columns:1fr}}
+  .palette{position:sticky;top:12px}
+  .pal{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:8px 0;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.05);user-select:none}
+  .pal:hover{border-color:var(--brand)}
+  .pal .ic{font-size:20px}
+  .pal .nm{font-weight:600;font-size:14px}
+  .pal .ds{font-size:12px;color:var(--muted)}
+  .block{background:#fafbfc;border:1px solid var(--border);border-left:4px solid var(--brand);border-radius:10px;padding:12px 14px;margin:10px 0;position:relative}
+  .block.b-text{border-left-color:var(--brand)}
+  .block.b-image{border-left-color:var(--brand2)}
+  .block.b-question{border-left-color:var(--warn)}
+  .block .hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .block .hdr .grab{cursor:grab;font-size:18px;color:var(--muted)}
+  .block .hdr .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  .block .hdr .spacer{flex:1}
+  .block .hdr button{background:#f1f5f9;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;padding:4px 8px}
+  .opt{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .opt input{flex:1}
+  .drag-over{outline:2px dashed var(--brand);outline-offset:2px}
+  .preview-img{max-width:100%;max-height:180px;border-radius:8px;margin-top:6px}
+  .quiz .qblock{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:16px;margin:14px 0}
+  .quiz .opt-row{display:flex;gap:10px;align-items:center;margin:8px 0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer}
+  .quiz .opt-row input{margin:0}
+  .cert{border:3px solid var(--ok);border-radius:14px;padding:24px;text-align:center;background:#f0fdf4;margin-top:16px}
+  .cert .big{font-size:26px;font-weight:800;color:#166534}
+  .code{font-family:Consolas,monospace;background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px;font-size:13px;white-space:pre-wrap;overflow:auto}
+  .note{background:#eff6ff;border-left:4px solid var(--brand);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+  .warnbox{background:#fff7ed;border-left:4px solid var(--warn);border-radius:8px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+  .metric{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;flex:1;min-width:100px}
+  .metric .num{font-size:24px;font-weight:800;color:var(--brand)}
+  .metric .lbl{font-size:12px;color:var(--muted)}
+  .metrics{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>🛡 CyberCheck</h1>
+  <p>No-code конструктор интерактивных чек-листов по кибергигиене · прототип</p>
+  <div class="tabs">
+    <button id="tabEditor" class="active" onclick="switchTab('editor')">🛠 Конструктор</button>
+    <button id="tabQuiz" onclick="switchTab('quiz')">▶ Пройти квиз</button>
+    <button id="tabJson" onclick="switchTab('json')">{ } JSON-схема</button>
+  </div>
+</header>
+
+<!-- ==================== КОНСТРУКТОР ==================== -->
+<section id="editorView">
+  <div class="card">
+    <h2>Конструктор чек-листа</h2>
+    <p class="muted">Перетащите блоки из палитры на холст (или кликните по блоку, чтобы добавить). Блоки можно переставлять мышью или кнопками ↑/↓.</p>
+    <div style="margin:10px 0">
+      <label style="font-weight:600;font-size:14px">Название чек-листа</label>
+      <input type="text" id="title" placeholder="Например: Кибергигиена для новичков" oninput="state.title=this.value;renderJson()">
+    </div>
+    <div class="editor">
+      <div class="palette">
+        <h3 style="margin-top:0">Блоки</h3>
+        <div class="pal" draggable="true" data-type="text" onclick="addBlock('text')" ondragstart="dragPalette(event,'text')">
+          <div class="ic">📝</div><div class="nm">Текст</div><div class="ds">Абзац с текстом</div>
+        </div>
+        <div class="pal" draggable="true" data-type="image" onclick="addBlock('image')" ondragstart="dragPalette(event,'image')">
+          <div class="ic">🖼</div><div class="nm">Картинка</div><div class="ds">Изображение по ссылке</div>
+        </div>
+        <div class="pal" draggable="true" data-type="question" onclick="addBlock('question')" ondragstart="dragPalette(event,'question')">
+          <div class="ic">❓</div><div class="nm">Вопрос</div><div class="ds">Вопрос с вариантами ответа</div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn primary small" onclick="saveDraft()">💾 Сохранить</button>
+          <button class="btn purple small" onclick="publish()">🚀 Опубликовать</button>
+          <button class="btn ghost small" onclick="seedDemo()">Демо</button>
+          <button class="btn danger small" onclick="clearAll()">Очистить</button>
+        </div>
+        <div class="muted" id="saveInfo" style="margin-top:8px"></div>
+      </div>
+      <div id="canvas" ondragover="allowDrop(event)" ondrop="onDrop(event)"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Защита от XSS-атак</h3>
+    <ul style="font-size:14px;color:#374151;margin:6px 0;padding-left:20px">
+      <li>Весь пользовательский ввод (текст, вопросы, варианты) при выводе <b>экранируется</b>: символы <span class="code" style="padding:1px 6px">&lt; &gt; &amp; " '</span> превращаются в безопасные HTML-сущности.</li>
+      <li>Ссылки на картинки <b>проверяются</b>: разрешены только <span class="code" style="padding:1px 6px">https://</span> и <span class="code" style="padding:1px 6px">data:image/…</span>, а <span class="code" style="padding:1px 6px">javascript:</span> блокируется.</li>
+      <li>Попробуйте вставить в текстовый блок <span class="code" style="padding:1px 6px">&lt;img src=x onerror=alert(1)&gt;</span> — он отобразится как обычный текст, а не выполнится.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== КВИЗ ==================== -->
+<section id="quizView" hidden>
+  <div class="card quiz">
+    <h2 id="quizTitle">Чек-лист</h2>
+    <p class="muted">Пройдите интерактивный чек-лист как квиз и получите результат.</p>
+    <div id="quizBody"></div>
+    <div id="quizFooter" style="margin-top:14px">
+      <label style="font-weight:600;font-size:14px">Ваше имя (для сертификата)</label>
+      <input type="text" id="userName" placeholder="Имя и фамилия" maxlength="60" style="max-width:360px">
+      <div style="margin-top:10px"><button class="btn primary" onclick="submitQuiz()">Завершить и получить результат</button></div>
+    </div>
+    <div id="quizResult"></div>
+  </div>
+</section>
+
+<!-- ==================== JSON ==================== -->
+<section id="jsonView" hidden>
+  <div class="card">
+    <h2>Схема хранения структуры в JSON</h2>
+    <p class="muted">Весь чек-лист хранится как один JSON-объект. Ниже — живой пример и описание схемы.</p>
+    <div class="metrics">
+      <div class="metric"><div class="num" id="mBlocks">0</div><div class="lbl">блоков</div></div>
+      <div class="metric"><div class="num" id="mQuestions">0</div><div class="lbl">вопросов</div></div>
+      <div class="metric"><div class="num" id="mChars">0</div><div class="lbl">символов JSON</div></div>
+    </div>
+    <h3>Текущая структура</h3>
+    <div class="code" id="jsonView"></div>
+    <h3>Описание полей</h3>
+    <div class="code" id="schemaDoc"></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+"use strict";
+/* ============ CyberCheck — прототип конструктора ============ */
+
+const DRAFT_KEY = "cybercheck_draft_v1";
+const PUB_KEY = "cybercheck_published_v1";
+
+let state = { title: "", blocks: [] };
+let published = null;
+
+/* ---------- безопасность: экранирование и проверка ссылок ---------- */
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function safeImageSrc(src){
+  src = String(src || "").trim();
+  if(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i.test(src)) return src;
+  if(/^https?:\/\//i.test(src)) return src;
+  return ""; // блокируем javascript: и прочие опасные схемы
+}
+function sanitizeCommentLike(s){ return esc(s); }
+
+/* ---------- демо-данные ---------- */
+function demoState(){
+  return {
+    title: "Кибергигиена для новичков",
+    blocks: [
+      {type:"text", content:"Добро пожаловать! Этот короткий чек-лист поможет проверить ваши навыки цифровой гигиены. Отвечайте на вопросы и в конце получите результат."},
+      {type:"image", src:"https://placehold.co/600x200/2563eb/ffffff?text=%D0%A1%D0%BA%D0%B8%D0%B4%D0%BE%D1%87%D0%BD%D0%B0%D1%8F+%D0%BA%D0%B0%D1%80%D1%82%D0%B8%D0%BD%D0%BA%D0%B0", alt:"Иллюстрация"},
+      {type:"question", question:"Какой пароль надёжнее?", options:["123456","qwerty","Сr4fty!P@ss_2026","password"], correct:2},
+      {type:"question", question:"Что делать с письмом от «банка», которое просит срочно перейти по ссылке и ввести данные карты?", options:["Перейти и ввести данные","Проверить отправителя и не переходить по ссылке","Ответить с номером карты"], correct:1},
+      {type:"text", content:"Отлично! Помните: не открывайте подозрительные ссылки, используйте уникальные пароли и двухфакторную аутентификацию."}
+    ]
+  };
+}
+
+/* ---------- хранилище ---------- */
+function loadDraft(){
+  try{ const d = JSON.parse(localStorage.getItem(DRAFT_KEY)); if(d && d.blocks) state = d; }catch(e){}
+}
+function saveDraft(){
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); document.getElementById("saveInfo").textContent = "✅ Сохранено " + new Date().toLocaleTimeString(); }catch(e){ document.getElementById("saveInfo").textContent = "⚠️ Хранилище недоступно"; }
+}
+function publish(){
+  saveDraft();
+  try{ localStorage.setItem(PUB_KEY, JSON.stringify(state)); published = state; }catch(e){}
+  document.getElementById("saveInfo").textContent = "🚀 Опубликовано! Ссылка: index.html#quiz";
+}
+function loadPublished(){
+  try{ const d = JSON.parse(localStorage.getItem(PUB_KEY)); if(d && d.blocks) published = d; }catch(e){}
+}
+function clearAll(){
+  if(confirm("Удалить все блоки?")){ state = {title:"", blocks:[]}; renderAll(); }
+}
+
+/* ---------- drag & drop ---------- */
+let dragKind = null, dragType = null, dragId = null;
+function dragPalette(e, type){ dragKind = "new"; dragType = type; e.dataTransfer.effectAllowed = "copy"; }
+function dragBlock(e, id){ dragKind = "move"; dragId = id; e.dataTransfer.effectAllowed = "move"; }
+function allowDrop(e){ e.preventDefault(); }
+function onDrop(e){
+  e.preventDefault();
+  const canvas = document.getElementById("canvas");
+  canvas.classList.remove("drag-over");
+  if(dragKind === "new"){ addBlock(dragType); }
+  else if(dragKind === "move"){
+    const target = e.target.closest(".block");
+    if(target && target.dataset.id !== dragId){
+      const from = state.blocks.findIndex(b => b.id === dragId);
+      const to = state.blocks.findIndex(b => b.id === target.dataset.id);
+      if(from >= 0 && to >= 0){
+        const [m] = state.blocks.splice(from, 1);
+        state.blocks.splice(to, 0, m);
+      }
+    }
+    renderEditor(); renderJson();
+  }
+  dragKind = null;
+}
+document.addEventListener("dragover", function(e){
+  const c = document.getElementById("canvas");
+  if(c && e.target.closest && (e.target.closest("#canvas"))) c.classList.add("drag-over");
+});
+document.addEventListener("drop", function(){ document.getElementById("canvas").classList.remove("drag-over"); });
+
+/* ---------- операции с блоками ---------- */
+function uid(){ return "b" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function addBlock(type){
+  if(type === "text") state.blocks.push({id:uid(), type:"text", content:""});
+  else if(type === "image") state.blocks.push({id:uid(), type:"image", src:"", alt:""});
+  else if(type === "question") state.blocks.push({id:uid(), type:"question", question:"", options:["",""], correct:0});
+  renderEditor(); renderJson();
+}
+function delBlock(id){ state.blocks = state.blocks.filter(b => b.id !== id); renderEditor(); renderJson(); }
+function moveBlock(id, dir){
+  const i = state.blocks.findIndex(b => b.id === id);
+  const j = i + dir;
+  if(i < 0 || j < 0 || j >= state.blocks.length) return;
+  const [m] = state.blocks.splice(i, 1); state.blocks.splice(j, 0, m);
+  renderEditor(); renderJson();
+}
+
+/* ---------- обновление полей (без перерисовки, чтобы не терять фокус) ---------- */
+function updateField(id, field, value){
+  const b = state.blocks.find(x => x.id === id);
+  if(!b) return;
+  if(field === "content" || field === "question" || field === "src" || field === "alt") b[field] = value;
+  renderJson();
+}
+function updateOption(id, idx, value){
+  const b = state.blocks.find(x => x.id === id);
+  if(!b) return;
+  b.options[idx] = value;
+  renderJson();
+}
+function addOption(id){
+  const b = state.blocks.find(x => x.id === id);
+  b.options.push("");
+  renderEditor(); renderJson();
+}
+function delOption(id, idx){
+  const b = state.blocks.find(x => x.id === id);
+  if(b.options.length <= 2) return;
+  b.options.splice(idx, 1);
+  if(b.correct >= b.options.length) b.correct = 0;
+  renderEditor(); renderJson();
+}
+function setCorrect(id, idx){
+  const b = state.blocks.find(x => x.id === id);
+  b.correct = idx;
+  renderJson();
+}
+
+/* ---------- рендер конструктора ---------- */
+function renderEditor(){
+  document.getElementById("title").value = state.title;
+  const c = document.getElementById("canvas");
+  if(!state.blocks.length){
+    c.innerHTML = '<div class="muted" style="padding:30px;text-align:center">Холст пуст. Перетащите сюда блоки из палитры слева.</div>';
+    return;
+  }
+  c.innerHTML = state.blocks.map(b => blockHTML(b)).join("");
+}
+function blockHTML(b){
+  if(b.type === "text"){
+    return `<div class="block b-text" data-id="${b.id}" draggable="true" ondragstart="dragBlock(event,'${b.id}')">
+      <div class="hdr"><span class="grab">⠿</span><span class="tag">Текст</span><span class="spacer"></span>
+        <button onclick="moveBlock('${b.id}',-1)" title="вверх">↑</button>
+        <button onclick="moveBlock('${b.id}',1)" title="вниз">↓</button>
+        <button onclick="delBlock('${b.id}')" title="удалить">✕</button></div>
+      <textarea placeholder="Текст блока…" oninput="updateField('${b.id}','content',this.value)">${esc(b.content)}</textarea>
+      <div class="muted" style="margin-top:6px">Предпросмотр: ${esc(b.content) || "—"}</div>
+    </div>`;
+  }
+  if(b.type === "image"){
+    const ok = safeImageSrc(b.src);
+    return `<div class="block b-image" data-id="${b.id}" draggable="true" ondragstart="dragBlock(event,'${b.id}')">
+      <div class="hdr"><span class="grab">⠿</span><span class="tag">Картинка</span><span class="spacer"></span>
+        <button onclick="moveBlock('${b.id}',-1)">↑</button>
+        <button onclick="moveBlock('${b.id}',1)">↓</button>
+        <button onclick="delBlock('${b.id}')">✕</button></div>
+      <input type="text" placeholder="https://… или data:image/…" value="${esc(b.src)}" oninput="updateField('${b.id}','src',this.value);this.closest('.block').querySelector('.preview-img').src=safeImageSrc(this.value)||''">
+      <input type="text" placeholder="Подпись (alt)" value="${esc(b.alt)}" oninput="updateField('${b.id}','alt',this.value)" style="margin-top:6px">
+      ${ok ? `<img class="preview-img" src="${ok}" alt="">` : '<div class="warnbox" style="margin-top:6px">Недопустимая ссылка (разрешены только https:// и data:image/…)</div>'}
+    </div>`;
+  }
+  if(b.type === "question"){
+    const opts = b.options.map((o,i) => `
+      <div class="opt">
+        <input type="radio" name="correct-${b.id}" ${i===b.correct?'checked':''} onchange="setCorrect('${b.id}',${i})" title="правильный ответ">
+        <input type="text" placeholder="Вариант ${i+1}" value="${esc(o)}" oninput="updateOption('${b.id}',${i},this.value)">
+        <button class="btn small danger" onclick="delOption('${b.id}',${i})">✕</button>
+      </div>`).join("");
+    return `<div class="block b-question" data-id="${b.id}" draggable="true" ondragstart="dragBlock(event,'${b.id}')">
+      <div class="hdr"><span class="grab">⠿</span><span class="tag">Вопрос (отметьте правильный вариант)</span><span class="spacer"></span>
+        <button onclick="moveBlock('${b.id}',-1)">↑</button>
+        <button onclick="moveBlock('${b.id}',1)">↓</button>
+        <button onclick="delBlock('${b.id}')">✕</button></div>
+      <input type="text" placeholder="Текст вопроса…" value="${esc(b.question)}" oninput="updateField('${b.id}','question',this.value)">
+      <div style="margin-top:8px">${opts}
+        <button class="btn small ghost" onclick="addOption('${b.id}')">+ Добавить вариант</button>
+      </div>
+    </div>`;
+  }
+  return "";
+}
+
+/* ---------- рендер квиза ---------- */
+function renderQuiz(){
+  const src = published || state;
+  document.getElementById("quizTitle").textContent = src.title || "Чек-лист";
+  const body = document.getElementById("quizBody");
+  if(!src.blocks || !src.blocks.length){
+    body.innerHTML = '<div class="muted">Чек-лист ещё не опубликован. Перейдите в «Конструктор» и нажмите «Опубликовать».</div>';
+    document.getElementById("quizFooter").style.display = "none";
+    return;
+  }
+  document.getElementById("quizFooter").style.display = "";
+  let qnum = 0;
+  body.innerHTML = src.blocks.map(b => {
+    if(b.type === "text") return `<div class="qblock">${esc(b.content)}</div>`;
+    if(b.type === "image"){
+      const ok = safeImageSrc(b.src);
+      return ok ? `<div class="qblock"><img style="max-width:100%;border-radius:8px" src="${ok}" alt="${esc(b.alt)}"></div>` : "";
+    }
+    if(b.type === "question"){
+      qnum++;
+      const opts = b.options.map((o,i) => `
+        <label class="opt-row">
+          <input type="radio" name="q${qnum}" value="${i}">
+          <span>${esc(o)}</span>
+        </label>`).join("");
+      return `<div class="qblock" data-q="${qnum}" data-correct="${b.correct}"><b>Вопрос ${qnum}.</b> ${esc(b.question)}${opts}</div>`;
+    }
+    return "";
+  }).join("");
+}
+
+/* ---------- результат и сертификат ---------- */
+function submitQuiz(){
+  const src = published || state;
+  const qs = [...document.querySelectorAll('#quizBody .qblock[data-correct]')];
+  let right = 0;
+  qs.forEach(q => {
+    const correct = q.dataset.correct;
+    const sel = q.querySelector('input:checked');
+    if(sel && sel.value === correct) right++;
+  });
+  const total = qs.length;
+  const pct = total ? Math.round(right/total*100) : 0;
+  const name = esc(document.getElementById("userName").value.trim() || "Участник");
+  const res = document.getElementById("quizResult");
+  const grade = pct >= 80 ? "Отлично" : pct >= 50 ? "Хорошо" : "Стоит повторить";
+  res.innerHTML = `
+    <div class="cert">
+      <div class="big">🏆 Сертификат о прохождении</div>
+      <div style="font-size:15px;margin:6px 0">Настоящим подтверждается, что</div>
+      <div style="font-size:22px;font-weight:700">${name}</div>
+      <div style="font-size:15px">прошёл(ла) чек-лист «${esc(src.title || "Кибергигиена")}»</div>
+      <div style="font-size:18px;font-weight:700;margin:8px 0">Результат: ${right} из ${total} (${pct}%) — ${grade}</div>
+      <div class="muted">Дата: ${new Date().toLocaleDateString("ru-RU")}</div>
+    </div>`;
+}
+
+/* ---------- JSON ---------- */
+function renderJson(){
+  const src = state;
+  document.getElementById("jsonView").textContent = JSON.stringify(src, null, 2);
+  document.getElementById("mBlocks").textContent = src.blocks.length;
+  document.getElementById("mQuestions").textContent = src.blocks.filter(b=>b.type==="question").length;
+  document.getElementById("mChars").textContent = JSON.stringify(src).length;
+}
+const SCHEMA_DOC = `{
+  "version": 1,                 // версия схемы
+  "title": "string",            // название чек-листа
+  "blocks": [                   // упорядоченный список блоков
+    { "type": "text", "content": "string" },
+    { "type": "image", "src": "https://…", "alt": "string" },
+    { "type": "question",
+      "question": "string",     // текст вопроса
+      "options": ["string", …], // варианты ответа
+      "correct": 0 }            // индекс правильного варианта
+  ]
+}`;
+document.getElementById("schemaDoc").textContent = SCHEMA_DOC;
+
+/* ---------- вкладки ---------- */
+function switchTab(t){
+  document.getElementById("editorView").hidden = t !== "editor";
+  document.getElementById("quizView").hidden = t !== "quiz";
+  document.getElementById("jsonView").hidden = t !== "json";
+  ["editor","quiz","json"].forEach(x => document.getElementById("tab"+x[0].toUpperCase()+x.slice(1)).classList.toggle("active", t===x));
+  if(t === "quiz") renderQuiz();
+  if(t === "json") renderJson();
+}
+
+/* ---------- инициализация ---------- */
+function renderAll(){ renderEditor(); renderJson(); }
+loadDraft();
+if(!state.blocks.length){ state = demoState(); }
+loadPublished();
+if(!published){ published = demoState(); try{ localStorage.setItem(PUB_KEY, JSON.stringify(published)); }catch(e){} }
+
+// deep-links для скриншотов/демонстрации
+if(location.hash === "#quiz") switchTab("quiz");
+else if(location.hash === "#json") switchTab("json");
+else switchTab("editor");
+
+// явно на window для inline onclick
+window.switchTab = switchTab; window.addBlock = addBlock; window.delBlock = delBlock;
+window.moveBlock = moveBlock; window.updateField = updateField; window.updateOption = updateOption;
+window.addOption = addOption; window.delOption = delOption; window.setCorrect = setCorrect;
+window.saveDraft = saveDraft; window.publish = publish; window.clearAll = clearAll;
+window.seedDemo = seedDemo; window.dragPalette = dragPalette; window.dragBlock = dragBlock;
+window.allowDrop = allowDrop; window.onDrop = onDrop; window.submitQuiz = submitQuiz;
+
+function seedDemo(){ state = demoState(); publish(); renderAll(); switchTab("editor"); }
+renderAll();
+</script>
+</body>
+</html>
